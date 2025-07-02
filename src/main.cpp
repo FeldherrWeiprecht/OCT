@@ -1,12 +1,24 @@
 #include <iostream>
 #include <string>
 
-#include <satellite.hpp>
+#include "satellite.hpp"
+#include "constants.hpp"
 
 void printLogo();
 
 int main(){
     printLogo();
+
+    std::string name = "SPER3";
+    double mass = 100;
+    double velocity = 20;
+    double altitude = 100;
+    oct::Satellite sattelite(name, mass, velocity, altitude);
+    sattelite.orbitalVelocity();
+    sattelite.orbitalPeriod();
+    sattelite.mechanicalEnergy();
+    sattelite.potentialEnergy();
+    sattelite.kineticEnergy();
 
     return 0;
 }
