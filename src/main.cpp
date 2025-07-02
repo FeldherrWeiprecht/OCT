@@ -1,10 +1,21 @@
 #include <iostream>
+#include <string>
+
+#include <satellite.hpp>
+
+void printLogo();
 
 int main(){
-    std::cout << "oct\n";
+    printLogo();
 
     return 0;
 }
 
-
-// formula Kepler = T = 2pi sqr((R+h)^3/ (GM))
+void printLogo(){
+    std::string logo = R"(  ____   ____ _____ 
+ / __ \ / ___|_   _|
+| |  | | |     | |  
+| |__| | |___  | |  
+ \____/ \____| |_|)";
+    std::cout << logo << std::endl;
+}
