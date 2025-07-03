@@ -8,8 +8,8 @@ class Satellite {
 public:
     std::string name;
     double mass; // kg
-    double velocity; // km/h
     double altitude; // km
+    double velocity; // km/h
     double orbitalRadius; // km
 
     Satellite(std::string& name, double mass, double velocity, double altitude);
