@@ -5,14 +5,13 @@
 namespace oct {
     
 class Satellite {
-private:
+public:
     std::string name;
     double mass; // kg
     double velocity; // km/h
     double altitude; // km
     double orbitalRadius; // km
 
-public:
     Satellite(std::string& name, double mass, double velocity, double altitude);
 
     double orbitalVelocity() const;
