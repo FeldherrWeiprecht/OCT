@@ -3,11 +3,12 @@
 
 #include "satellite.hpp"
 #include "constants.hpp"
+#include "file_manager.hpp"
 
 void printLogo();
 void selectMeasurementSystem();
 std::string selectSatelliteDataInputMode();
-oct::Satellite getSatelliteData(std::string& input = "manual");
+oct::Satellite getSatelliteData(const std::string& input = "manual");
 
 int main(){
     printLogo();
@@ -31,85 +32,134 @@ int main(){
 }
 
 void printLogo(){
-    std::string logo = R"(  ____   ____ _____ 
- / __ \ / ___|_   _|
-| |  | | |     | |  
-| |__| | |___  | |  
- \____/ \____| |_|)";
+    std::string logo = R"(
+        $$$$$$\    $$$$$$\   $$$$$$$$\ 
+        $$  __$$\  $$  __$$\  \__$$  __|
+    $$ /  $$ |  $$ /  \__|    $$ |
+    $$ |  $$ |  $$ |          $$ |
+    $$ |  $$ |  $$ |          $$ |
+    $$ |  $$ |  $$ |  $$$$    $$ |  
+    \$$$$$$  |  \$$$$$$$ /    $$ |
+        \______/    \______/     \__|
+    )";
     std::cout << logo << std::endl;
 }
 
 void selectMeasurementSystem() {
-    std::cout << "Select a measurement system:" << std::endl;
-    std::cout << "1. SI (kilogram, kilometer, km/h)" << std::endl;
-    std::cout << "2. Imperial (pound, feet, mph)" << std::endl;
-    std::cout << "3. Nautical (pound, feet, kn)" << std::endl;
-    std::cout << "Enter your choice (1–3): ";
-
     int input;
-    std::cin >> input;
+    bool valid = false;
 
-    // omg switch statement
-    switch (input) {
-        case 1:
-            std::cout << "You selected SI measurement system." << std::endl;
-            break;
-        case 2:
-            std::cout << "You selected Imperial measurement system." << std::endl;
-            break;
-        case 3:
-            std::cout << "You selected Nautical measurement system." << std::endl;
-            break;
-        default:
-            std::cout << "Invalid choice! Please try again." << std::endl;
-            selectMeasurementSystem();
-            break;
+    while (valid == false) {
+        std::cout << "Select a measurement system:" << std::endl;
+        std::cout << "1. SI (kilogram, kilometer, km/h)" << std::endl;
+        std::cout << "2. Imperial (pound, feet, mph)" << std::endl;
+        std::cout << "3. Nautical (pound, feet, kn)" << std::endl;
+        std::cout << "Enter your choice (1-3): ";
+
+        std::cin >> input;
+
+        if (std::cin.fail()) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            std::cout << std::endl << "Invalid input! Try again." << std::endl << std::endl;
+            continue;
+        }
+
+        switch (input) {
+            case 1:
+                std::cout << "You selected SI measurement system." << std::endl;
+                valid = true;
+                break;
+            case 2:
+                std::cout << "You selected Imperial measurement system." << std::endl;
+                valid = true;
+                break;
+            case 3:
+                std::cout << "You selected Nautical measurement system." << std::endl;
+                valid = true;
+                break;
+            default:
+                std::cout << std::endl << "Invalid choice! Try again." << std::endl << std::endl;
+        }
     }
 }
 
 std::string selectSatelliteDataInputMode(){
-    std::cout << "Select satellite data input mode:" << std::endl;
-    std::cout << "1. Manual input" << std::endl;
-    std::cout << "2. Load from file" << std::endl;
-    std::cout << "Enter your choice (1–2): ";
-
     int input;
-    std::cin >> input;
+    bool valid = false;
 
-    switch (input) {
+
+    while (valid == false) {
+        std::cout << "Select satellite data input mode:" << std::endl;
+        std::cout << "1. Manual input" << std::endl;
+        std::cout << "2. Load from file" << std::endl;
+        std::cout << "Enter your choice (1-2): ";
+
+        std::cin >> input;
+
+        if (std::cin.fail()) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            std::cout << std::endl << "Invalid input! Try again." << std::endl << std::endl;
+            continue;
+        }
+
+        switch (input) {
         case 1:
             return "manual";
         case 2:
             return "file";
         default:
-            std::cout << "Invalid choice! Please try again." << std::endl;
-            return selectSatelliteDataInputMode();
+            std::cout << std::endl << "Invalid choice! Try again." << std::endl << std::endl;
+        }
     }
+
+    return "manual";
 }
 
-// todo: data validation, reenter input if invalid and show which measurement unit is used
-oct::Satellite getSatelliteData(std::string& input = "manual") {
+oct::Satellite getSatelliteData(const std::string& input) {
     if (input == "manual") {
         std::string name;
         double mass, velocity, altitude;
 
         std::cout << "Enter satellite name: ";
-        std::cin >> name;
-        std::cout << "Enter satellite mass: ";
-        std::cin >> mass;
-        std::cout << "Enter satellite velocity: ";
-        std::cin >> velocity;
-        std::cout << "Enter satellite altitude: ";
-        std::cin >> altitude;
+        while (!(std::cin >> name)) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            std::cout << "Invalid input! Enter a valid name for the satellite: ";
+        }
+
+        std::cout << "Enter satellite mass (kg): ";
+        while (!(std::cin >> mass)) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            std::cout << "Invalid input! Enter a valid number for the mass: ";
+        }
+
+        std::cout << "Enter satellite velocity (km/h): ";
+        while (!(std::cin >> velocity)) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            std::cout << "Invalid input! Enter a valid number for the velocity: ";
+        }
+
+        std::cout << "Enter satellite altitude (km): ";
+        while (!(std::cin >> altitude)) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            std::cout << "Invalid input! Enter a valid number for altitude: ";
+        }
 
         return oct::Satellite(name, mass, velocity, altitude);
-    } else if (input == "file") {
+    }
+    else if (input == "file") {
         std::string path;
         std::cout << "Enter the path to the satellite json file: ";
         std::cin >> path;
 
         return oct::FileManager::loadSatelliteFromFile(path);
-    } else {
+    }
+    else {
         throw std::invalid_argument("Invalid input: " + input);
     }
 }

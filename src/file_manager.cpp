@@ -1,6 +1,8 @@
 #include <fstream>
-#include <nlohmann/json.hpp>
 #include <stdexcept>
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 #include "file_manager.hpp"
 #include "satellite.hpp"
@@ -12,7 +14,7 @@ namespace oct {
         if (!file.is_open()) {
             throw std::runtime_error("Could not open the file with the path: " + path);
         }
-        nlohmann::json data;
+        json data;
         file >> data;
 
         oct::Satellite satellite(
@@ -30,7 +32,7 @@ namespace oct {
         if (!file.is_open()) {
             throw std::runtime_error("Could not open the file with the path: " + path);
         }
-        nlohmann::json data;
+        json data;
 
         data["name"] = satellite.name;
         data["mass"] = satellite.mass;
