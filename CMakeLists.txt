@@ -15,5 +15,7 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     include/**/*.hpp
 )
 
+file(COPY data DESTINATION ${CMAKE_BINARY_DIR})
+
 add_executable(oct ${SOURCES})
 source_group(TREE ${CMAKE_SOURCE_DIR} FILES ${SOURCES})

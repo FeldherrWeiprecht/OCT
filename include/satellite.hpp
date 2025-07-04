@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+#include "satellite_data.hpp"
 
 namespace oct {
-    
+
 class Satellite {
 public:
     std::string name;
@@ -21,6 +22,7 @@ public:
     double potentialEnergy() const;
     double kineticEnergy() const;
     double escapeVelocity() const;
+    SatelliteData calculateAll() const;
 };
 
 }

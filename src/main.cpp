@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <windows.h>
 #include <exception>
+#include <thread>
+#include <chrono>
 
 #include "satellite.hpp"
 #include "constants.hpp"
@@ -16,6 +18,8 @@ void selectMeasurementSystem();
 std::string selectSatelliteDataInputMode();
 oct::Satellite getSatelliteData(const std::string& input = "manual");
 void printErrorMessage(const std::string& message = "Invalid input! Try again.");
+void summarizeSatelliteData(oct::Satellite satellite);
+oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration);
 
 int main(){
     printLogo();
@@ -24,12 +28,8 @@ int main(){
     std::string satelliteDataInputMode = selectSatelliteDataInputMode();
     oct::Satellite satellite = getSatelliteData(satelliteDataInputMode);
     std::cout << std::endl;
-    satellite.orbitalVelocity();
-    satellite.orbitalPeriod();
-    satellite.mechanicalEnergy();
-    satellite.potentialEnergy();
-    satellite.kineticEnergy();
-    satellite.escapeVelocity();
+
+    oct::SatelliteData satelliteData = printOrbitLoader(satellite, 3);
 
     return 0;
 }
@@ -236,4 +236,28 @@ void printErrorMessage(const std::string& message){
     SetConsoleTextAttribute(handle, FOREGROUND_RED | FOREGROUND_INTENSITY);
     std::cout << message;
     SetConsoleTextAttribute(handle, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+}
+
+oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration){
+    std::string frames = "|/-\\";
+    int idx = 0;
+    oct::SatelliteData data = satellite.calculateAll();
+    auto begin = std::chrono::steady_clock::now();
+    
+    std::thread calculationThread([&]() {
+        data = satellite.calculateAll();
+    });
+
+    while ((std::chrono::steady_clock::now() - begin) < std::chrono::seconds(duration)) {
+        std::cout << "\rCalculating " << frames[idx++] << std::flush;
+        idx %= 4;
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+
+    calculationThread.join(); 
+    std::cout << "\r                     \rCalculation done!" << std::flush;
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    printLogo();
+
+    return data;
 }
