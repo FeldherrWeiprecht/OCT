@@ -12,6 +12,7 @@ public:
     double velocity; // km/h
     double orbitalRadius; // km
 
+    Satellite();
     Satellite(const std::string& name, double mass, double velocity, double altitude);
 
     double orbitalVelocity() const;

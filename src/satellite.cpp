@@ -3,6 +3,14 @@
 #include "constants.hpp"
 
 namespace oct {
+    Satellite::Satellite(){
+        this->name = "";
+        this->mass = mass;
+        this->velocity = 0;
+        this->altitude = 0;
+        this->orbitalRadius = 0;
+    }
+
     Satellite::Satellite(const std::string& name, double mass, double velocity, double altitude){
         this->name = name;
         this->mass = mass;

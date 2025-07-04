@@ -1,7 +1,6 @@
 #include "unit_converter.hpp"
 
 namespace oct {
-
     double UnitConverter::convertFeetToMeters(double feet) {
         return feet * 0.3048;
     }

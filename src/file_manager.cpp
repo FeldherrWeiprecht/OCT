@@ -12,7 +12,7 @@ namespace oct {
     Satellite FileManager::loadSatelliteFromFile(std::string& path) {
         std::ifstream file(path);
         if (!file.is_open()) {
-            throw std::runtime_error("Could not open the file with the path: " + path);
+            throw std::runtime_error("\nCould not open the file with the path: " + path + "\n");
         }
         json data;
         file >> data;
@@ -30,7 +30,7 @@ namespace oct {
     void FileManager::saveSatelliteToFile(Satellite& satellite, std::string& path) {
         std::ofstream file(path);
         if (!file.is_open()) {
-            throw std::runtime_error("Could not open the file with the path: " + path);
+            throw std::runtime_error("\nCould not open the file with the path: " + path + "\nPlease make sure that the file is in the same directory as the program.\n");
         }
         json data;
 

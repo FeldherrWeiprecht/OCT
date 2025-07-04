@@ -2,10 +2,14 @@
 #include <string>
 #include <cstdlib>
 #include <windows.h>
+#include <exception>
 
 #include "satellite.hpp"
 #include "constants.hpp"
 #include "file_manager.hpp"
+#include "unit_converter.hpp"
+
+int measurementSystem = 1;
 
 void printLogo();
 void selectMeasurementSystem();
@@ -85,6 +89,7 @@ void selectMeasurementSystem() {
                 printErrorMessage(message);
         }
     }
+    measurementSystem = input;
     printLogo();
 }
 
@@ -125,12 +130,30 @@ std::string selectSatelliteDataInputMode(){
 
 oct::Satellite getSatelliteData(const std::string& input) {
     std::cout << std::endl;
+    std::string message;
 
     if (input == "manual") {
         std::string name;
         double mass, velocity, altitude;
-        std::string message = "Invalid input! ";
+        std::string massUnit, velocityUnit, altitudeUnit;
+        message = "Invalid input! ";
 
+        if (measurementSystem == 1){
+            massUnit = "kg";
+            velocityUnit = "km/h";
+            altitudeUnit = "km";
+        }
+        else if(measurementSystem == 2){
+            massUnit = "lb";
+            velocityUnit = "mph";
+            altitudeUnit = "ft";
+        } 
+        else if (measurementSystem == 3){
+            massUnit = "lb";
+            velocityUnit = "kn";
+            altitudeUnit = "ft";
+        }
+        
         printLogo();
         std::cout << "Enter satellite name: ";
         while (!(std::cin >> name)) {
@@ -141,45 +164,71 @@ oct::Satellite getSatelliteData(const std::string& input) {
         }
 
         printLogo();
-        std::cout << "Enter satellite mass (kg): ";
+        std::cout << "Enter satellite mass (" << massUnit << "): ";
         while (!(std::cin >> mass)) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
             printErrorMessage(message);
-            std::cout << "Enter a valid number for the mass: ";
+            std::cout << "Enter a valid number for the mass (" << massUnit << "): ";
         }
 
         printLogo();
-        std::cout << "Enter satellite velocity (km/h): ";
+        std::cout << "Enter satellite velocity (" << velocityUnit << "): ";
         while (!(std::cin >> velocity)) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
             printErrorMessage(message);
-            std::cout << "Enter a valid number for the velocity: ";
+            std::cout << "Enter a valid number for the velocity (" << velocityUnit << "): ";
         }
         
         printLogo();
-        std::cout << "Enter satellite altitude (km): ";
+        std::cout << "Enter satellite altitude (" << altitudeUnit << "): ";
         while (!(std::cin >> altitude)) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
             printErrorMessage(message);
-            std::cout << "Enter a valid number for altitude: ";
+            std::cout << "Enter a valid number for altitude (" << altitudeUnit << "): ";
         }
         printLogo();
 
-        return oct::Satellite(name, mass, velocity, altitude);
+        if(measurementSystem == 1){
+            return oct::Satellite(name, mass, velocity, altitude);
+        }else if(measurementSystem == 2){
+            mass = oct::UnitConverter::convertPoundsToKilograms(mass);
+            velocity = oct::UnitConverter::convertMilesPerHourToKilometersPerHour(velocity);
+            altitude = oct::UnitConverter::convertFeetToMeters(altitude);
+            return oct::Satellite(name, mass, velocity, altitude);
+        } else if(measurementSystem == 3){
+            mass = oct::UnitConverter::convertPoundsToKilograms(mass);
+            velocity = oct::UnitConverter::convertKnotsToKilometersPerHour(velocity);
+            altitude = oct::UnitConverter::convertFeetToMeters(altitude);
+            return oct::Satellite(name, mass, velocity, altitude);
+        }
+
     }
     else if (input == "file") {
         std::string path;
-        std::cout << "Enter the path to the satellite json file: ";
-        std::cin >> path;
+        oct::Satellite satellite;
+        bool loaded = false;
 
-        return oct::FileManager::loadSatelliteFromFile(path);
+        printLogo();
+
+        while (loaded == false) {
+            std::cout << "Enter the path for the satellite json file: ";
+            std::cin >> path;
+
+            try {
+                satellite = oct::FileManager::loadSatelliteFromFile(path);
+                loaded = true;
+            } catch (const std::exception& e) {
+                message = e.what();
+                printErrorMessage(message);
+            }
+        }
+
+        return satellite;
     }
-    else {
-        throw std::invalid_argument("Invalid input: " + input);
-    }
+    
 }
 
 void printErrorMessage(const std::string& message){
