@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
+#include <windows.h>
 
 #include "satellite.hpp"
 #include "constants.hpp"
@@ -9,6 +11,7 @@ void printLogo();
 void selectMeasurementSystem();
 std::string selectSatelliteDataInputMode();
 oct::Satellite getSatelliteData(const std::string& input = "manual");
+void printErrorMessage(const std::string& message = "Invalid input! Try again.");
 
 int main(){
     printLogo();
@@ -16,31 +19,28 @@ int main(){
 
     std::string satelliteDataInputMode = selectSatelliteDataInputMode();
     oct::Satellite satellite = getSatelliteData(satelliteDataInputMode);
-
-    std::string name = "SPER3";
-    double mass = 100;
-    double velocity = 20;
-    double altitude = 100;
-    oct::Satellite sattelite(name, mass, velocity, altitude);
-    sattelite.orbitalVelocity();
-    sattelite.orbitalPeriod();
-    sattelite.mechanicalEnergy();
-    sattelite.potentialEnergy();
-    sattelite.kineticEnergy();
+    std::cout << std::endl;
+    satellite.orbitalVelocity();
+    satellite.orbitalPeriod();
+    satellite.mechanicalEnergy();
+    satellite.potentialEnergy();
+    satellite.kineticEnergy();
+    satellite.escapeVelocity();
 
     return 0;
 }
 
 void printLogo(){
+    std::system("cls");
     std::string logo = R"(
-        $$$$$$\    $$$$$$\   $$$$$$$$\ 
-        $$  __$$\  $$  __$$\  \__$$  __|
+      $$$$$$\    $$$$$\    $$$$$$$$\ 
+     $$  __$$\  $$  __$$\  \__$$  __|
     $$ /  $$ |  $$ /  \__|    $$ |
     $$ |  $$ |  $$ |          $$ |
     $$ |  $$ |  $$ |          $$ |
     $$ |  $$ |  $$ |  $$$$    $$ |  
     \$$$$$$  |  \$$$$$$$ /    $$ |
-        \______/    \______/     \__|
+     \______/    \______/     \__|
     )";
     std::cout << logo << std::endl;
 }
@@ -48,6 +48,7 @@ void printLogo(){
 void selectMeasurementSystem() {
     int input;
     bool valid = false;
+    std::string message = "\nInvalid choice! Try again.\n\n";
 
     while (valid == false) {
         std::cout << "Select a measurement system:" << std::endl;
@@ -61,7 +62,8 @@ void selectMeasurementSystem() {
         if (std::cin.fail()) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
-            std::cout << std::endl << "Invalid input! Try again." << std::endl << std::endl;
+            printLogo();
+            printErrorMessage(message);
             continue;
         }
 
@@ -79,15 +81,17 @@ void selectMeasurementSystem() {
                 valid = true;
                 break;
             default:
-                std::cout << std::endl << "Invalid choice! Try again." << std::endl << std::endl;
+                printLogo();
+                printErrorMessage(message);
         }
     }
+    printLogo();
 }
 
 std::string selectSatelliteDataInputMode(){
     int input;
     bool valid = false;
-
+    std::string message = "\nInvalid choice! Try again.\n\n";
 
     while (valid == false) {
         std::cout << "Select satellite data input mode:" << std::endl;
@@ -100,7 +104,8 @@ std::string selectSatelliteDataInputMode(){
         if (std::cin.fail()) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
-            std::cout << std::endl << "Invalid input! Try again." << std::endl << std::endl;
+            printLogo();
+            printErrorMessage(message);
             continue;
         }
 
@@ -110,45 +115,58 @@ std::string selectSatelliteDataInputMode(){
         case 2:
             return "file";
         default:
-            std::cout << std::endl << "Invalid choice! Try again." << std::endl << std::endl;
+            printLogo();
+            printErrorMessage(message);
         }
     }
-
+    printLogo();
     return "manual";
 }
 
 oct::Satellite getSatelliteData(const std::string& input) {
+    std::cout << std::endl;
+
     if (input == "manual") {
         std::string name;
         double mass, velocity, altitude;
+        std::string message = "Invalid input! ";
 
+        printLogo();
         std::cout << "Enter satellite name: ";
         while (!(std::cin >> name)) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
-            std::cout << "Invalid input! Enter a valid name for the satellite: ";
+            printErrorMessage();
+            std::cout << "Enter a valid name for the satellite: ";
         }
 
+        printLogo();
         std::cout << "Enter satellite mass (kg): ";
         while (!(std::cin >> mass)) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
-            std::cout << "Invalid input! Enter a valid number for the mass: ";
+            printErrorMessage(message);
+            std::cout << "Enter a valid number for the mass: ";
         }
 
+        printLogo();
         std::cout << "Enter satellite velocity (km/h): ";
         while (!(std::cin >> velocity)) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
-            std::cout << "Invalid input! Enter a valid number for the velocity: ";
+            printErrorMessage(message);
+            std::cout << "Enter a valid number for the velocity: ";
         }
-
+        
+        printLogo();
         std::cout << "Enter satellite altitude (km): ";
         while (!(std::cin >> altitude)) {
             std::cin.clear();
             std::cin.ignore(1000, '\n');
-            std::cout << "Invalid input! Enter a valid number for altitude: ";
+            printErrorMessage(message);
+            std::cout << "Enter a valid number for altitude: ";
         }
+        printLogo();
 
         return oct::Satellite(name, mass, velocity, altitude);
     }
@@ -162,4 +180,11 @@ oct::Satellite getSatelliteData(const std::string& input) {
     else {
         throw std::invalid_argument("Invalid input: " + input);
     }
+}
+
+void printErrorMessage(const std::string& message){
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(handle, FOREGROUND_RED | FOREGROUND_INTENSITY);
+    std::cout << message;
+    SetConsoleTextAttribute(handle, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 }
