@@ -20,6 +20,7 @@ oct::Satellite getSatelliteData(const std::string& input = "manual");
 void printErrorMessage(const std::string& message = "Invalid input! Try again.");
 void summarizeSatelliteData(oct::Satellite satellite);
 oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration);
+void summarizeSatelliteData(oct::Satellite satellite, oct::SatelliteData data);
 
 int main(){
     printLogo();
@@ -30,6 +31,7 @@ int main(){
     std::cout << std::endl;
 
     oct::SatelliteData satelliteData = printOrbitLoader(satellite, 3);
+    summarizeSatelliteData(satellite, satelliteData);
 
     return 0;
 }
@@ -255,9 +257,68 @@ oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duratio
     }
 
     calculationThread.join(); 
-    std::cout << "\r                     \rCalculation done!" << std::flush;
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     printLogo();
 
     return data;
+}
+
+void summarizeSatelliteData(oct::Satellite satellite, oct::SatelliteData data) {
+    std::string massUnit, velocityUnit, altitudeUnit;
+    std::string energyUnit = "J";
+    std::string timeUnit = "s";
+
+    if (measurementSystem == 1) {
+        massUnit = "kg";
+        velocityUnit = "km/h";
+        altitudeUnit = "km";
+    } else if (measurementSystem == 2) {
+        massUnit = "lb";
+        velocityUnit = "mph";
+        altitudeUnit = "ft";
+    } else if (measurementSystem == 3) {
+        massUnit = "lb";
+        velocityUnit = "kn";
+        altitudeUnit = "ft";
+    }
+
+    std::cout << "\n+--------------------------+-------------------------+\n";
+    std::cout << "|                 SATELLITE SUMMARY                  |\n";
+    std::cout << "+--------------------------+-------------------------+\n";
+    std::cout << "| Parameter                | Value                   |\n";
+    std::cout << "+--------------------------+-------------------------+\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Name"
+              << "| " << std::left << std::setw(24) << satellite.name << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Mass"
+              << "| " << std::left << std::setw(24) << (std::to_string(satellite.mass) + " " + massUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Altitude"
+              << "| " << std::left << std::setw(24) << (std::to_string(satellite.altitude) + " " + altitudeUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Velocity"
+              << "| " << std::left << std::setw(24) << (std::to_string(satellite.velocity) + " " + velocityUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Orbital Radius"
+              << "| " << std::left << std::setw(24) << (std::to_string(satellite.orbitalRadius) + " " + altitudeUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Orbital Velocity"
+              << "| " << std::left << std::setw(24) << (std::to_string(data.orbitalVelocity) + " " + velocityUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Orbital Period"
+              << "| " << std::left << std::setw(24) << (std::to_string(data.orbitalPeriod) + " " + timeUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Mechanical Energy"
+              << "| " << std::left << std::setw(24) << (std::to_string(data.mechanicalEnergy) + " " + energyUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Potential Energy"
+              << "| " << std::left << std::setw(24) << (std::to_string(data.potentialEnergy) + " " + energyUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Kinetic Energy"
+              << "| " << std::left << std::setw(24) << (std::to_string(data.kineticEnergy) + " " + energyUnit) << "|\n";
+
+    std::cout << "| " << std::left << std::setw(25) << "Escape Velocity"
+              << "| " << std::left << std::setw(24) << (std::to_string(data.escapeVelocity) + " " + velocityUnit) << "|\n";
+
+    std::cout << "+-------------------------+--------------------------+\n";
 }
