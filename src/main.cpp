@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include <windows.h>
 #include <exception>
 #include <thread>
 #include <chrono>
@@ -14,6 +13,7 @@
 
 int measurementSystem = 1;
 
+void clearScreen();
 void printLogo();
 void selectMeasurementSystem();
 std::string selectSatelliteDataInputMode();
@@ -24,9 +24,6 @@ oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duratio
 void summarizeSatelliteData(oct::Satellite satellite, oct::SatelliteData data);
 
 int main() {
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(handle, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-   
     bool repeat = true;
     std::string message = "\nInvalid choice! Try again.\n";
 
@@ -69,8 +66,16 @@ int main() {
     return 0;
 }
 
-void printLogo(){
+void clearScreen() {
+#ifdef _WIN32
     std::system("cls");
+#else
+    std::system("clear");
+#endif
+}
+
+void printLogo() {
+    clearScreen();
     std::string logo = R"(
       $$$$$$\    $$$$$\    $$$$$$$$\ 
      $$  __$$\  $$  __$$\  \__$$  __|
@@ -186,7 +191,7 @@ oct::Satellite getSatelliteData(const std::string& input) {
                     throw std::invalid_argument("Wrong input.");
                 }
             } catch (...) {
-                printErrorMessage("\nInvalid input! Use only numbers. Use a dot '.' as decimal separator if needed.\n");
+                printErrorMessage("\nInvalid input! Only numbers are allowed. Use a dot '.' as decimal separator if needed. Example: 1250.000\n");
             }
         }
 
@@ -204,7 +209,7 @@ oct::Satellite getSatelliteData(const std::string& input) {
                     throw std::invalid_argument("Wrong input.");
                 }
             } catch (...) {
-                printErrorMessage("\nInvalid input! Use only numbers. Use a dot '.' as decimal separator if needed.\n");
+                printErrorMessage("\nInvalid input! Only numbers are allowed. Use a dot '.' as decimal separator if needed. Example: 27600.000\n");
             }
         }
 
@@ -222,7 +227,7 @@ oct::Satellite getSatelliteData(const std::string& input) {
                     throw std::invalid_argument("Wrong input.");
                 }
             } catch (...) {
-                printErrorMessage("\nInvalid input! Use only numbers. Use a dot '.' as decimal separator if needed.\n");
+            printErrorMessage("\nInvalid input! Only numbers are allowed. Use a dot '.' as decimal separator if needed. Example: 550.000\n");
             }
         }
 
@@ -278,11 +283,8 @@ oct::Satellite getSatelliteData(const std::string& input) {
     }
 }
 
-void printErrorMessage(const std::string& message){
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(handle, FOREGROUND_RED | FOREGROUND_INTENSITY);
-    std::cout << message;
-    SetConsoleTextAttribute(handle, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+void printErrorMessage(const std::string& message) {
+    std::cout << "\033[1;31m" << message << "\033[0m";
 }
 
 oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration){
