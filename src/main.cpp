@@ -5,6 +5,8 @@
 #include <thread>
 #include <chrono>
 #include <iomanip>
+#include <fstream>
+#include <csignal>
 
 #include "satellite.hpp"
 #include "constants.hpp"
@@ -18,52 +20,144 @@ void printLogo();
 void selectMeasurementSystem();
 std::string selectSatelliteDataInputMode();
 oct::Satellite getSatelliteData(const std::string& input = "manual");
-void printErrorMessage(const std::string& message = "Invalid input! Try again.");
-void summarizeSatelliteData(oct::Satellite satellite);
-oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration);
+void printErrorMessage(const std::string& message);
 void summarizeSatelliteData(oct::Satellite satellite, oct::SatelliteData data);
+oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration);
+
+void resetTerminalColor(int signum);
 
 int main() {
+    std::signal(SIGINT, resetTerminalColor);
+
     bool repeat = true;
-    std::string message = "\nInvalid choice! Try again.\n";
+    std::string errorMessage = "";
 
     while (repeat) {
         printLogo();
+
         selectMeasurementSystem();
 
         std::string satelliteDataInputMode = selectSatelliteDataInputMode();
+
         oct::Satellite satellite = getSatelliteData(satelliteDataInputMode);
+
         std::cout << std::endl;
 
         oct::SatelliteData satelliteData = printOrbitLoader(satellite, 3);
+
         summarizeSatelliteData(satellite, satelliteData);
 
-        std::string input;
-        bool valid = false;
+        bool validSaveChoice = false;
 
-        while (valid == false) {
+        while (!validSaveChoice) {
+            if (errorMessage != "") {
+                clearScreen();
+                printLogo();
+                printErrorMessage(errorMessage);
+                errorMessage.clear();
+            }
+
+            std::cout << "\nDo you want to save calculation results as JSON?" << std::endl;
+            std::cout << "1. Yes" << std::endl;
+            std::cout << "2. No" << std::endl;
+            std::cout << "Enter your choice (1-2): ";
+
+            std::string saveInput;
+            std::getline(std::cin, saveInput);
+
+            if (saveInput == "1") {
+                bool validPath = false;
+
+                while (!validPath) {
+                    clearScreen();
+                    printLogo();
+
+                    std::cout << "\nEnter file path and name to save results as JSON (example: results.json): ";
+
+                    std::string pathInput;
+                    std::getline(std::cin, pathInput);
+
+                    if (pathInput.empty()) {
+                        errorMessage = "Invalid input! It has to be a valid file path.\n";
+                        break;
+                    }
+
+                    std::ofstream file(pathInput.c_str());
+
+                    if (!file.is_open()) {
+                        errorMessage = "Invalid input! It has to be a valid file path.\n";
+                        break;
+                    }
+
+                    file << "{\n";
+                    file << "  \"name\": \"" << satellite.name << "\",\n";
+                    file << "  \"mass\": " << satellite.mass << ",\n";
+                    file << "  \"velocity\": " << satellite.velocity << ",\n";
+                    file << "  \"altitude\": " << satellite.altitude << ",\n";
+                    file << "  \"orbital_radius\": " << satellite.orbitalRadius << ",\n";
+                    file << "  \"orbital_velocity\": " << satelliteData.orbitalVelocity << ",\n";
+                    file << "  \"orbital_period\": " << satelliteData.orbitalPeriod << ",\n";
+                    file << "  \"mechanical_energy\": " << satelliteData.mechanicalEnergy << ",\n";
+                    file << "  \"potential_energy\": " << satelliteData.potentialEnergy << ",\n";
+                    file << "  \"kinetic_energy\": " << satelliteData.kineticEnergy << ",\n";
+                    file << "  \"escape_velocity\": " << satelliteData.escapeVelocity << "\n";
+                    file << "}\n";
+
+                    file.close();
+
+                    std::cout << "\n\nResults successfully saved as " << pathInput << "\n\n";
+
+                    validPath = true;
+                    validSaveChoice = true;
+                    errorMessage.clear();
+                }
+            } else if (saveInput == "2") {
+                validSaveChoice = true;
+            } else {
+                errorMessage = "Invalid input! Please enter 1 or 2.\n";
+            }
+        }
+
+        bool validRepeatChoice = false;
+
+        errorMessage.clear();
+
+        while (!validRepeatChoice) {
+            if (errorMessage != "") {
+                clearScreen();
+                printLogo();
+                printErrorMessage(errorMessage);
+                errorMessage.clear();
+            }
+
             std::cout << "\nDo you want to run the program again?" << std::endl;
             std::cout << "1. Yes" << std::endl;
             std::cout << "2. No" << std::endl;
             std::cout << "Enter your choice (1-2): ";
 
+            std::string input;
             std::getline(std::cin, input);
 
             if (input == "1") {
                 repeat = true;
-                valid = true;
+                validRepeatChoice = true;
             } else if (input == "2") {
                 repeat = false;
-                valid = true;
+                std::cout << "\033[0m";
                 return 0;
             } else {
-                printLogo();
-                printErrorMessage(message);
+                errorMessage = "Invalid input! Please enter 1 or 2.\n";
             }
         }
     }
 
     return 0;
+}
+
+void resetTerminalColor(int signum) {
+    (void)signum;
+    std::cout << "\033[0m" << std::endl;
+    std::exit(signum);
 }
 
 void clearScreen() {
@@ -76,6 +170,7 @@ void clearScreen() {
 
 void printLogo() {
     clearScreen();
+
     std::string logo = R"(
       $$$$$$\    $$$$$\    $$$$$$$$\ 
      $$  __$$\  $$  __$$\  \__$$  __|
@@ -86,15 +181,16 @@ void printLogo() {
     \$$$$$$  |  \$$$$$$$ /    $$ |
      \______/    \______/     \__|
     )";
+
     std::cout << logo << std::endl;
 }
 
 void selectMeasurementSystem() {
     std::string input;
     bool valid = false;
-    std::string message = "\nInvalid choice! Try again.\n\n";
+    std::string errorMessage = "\nInvalid choice! Try again.\n\n";
 
-    while (valid == false) {
+    while (!valid) {
         std::cout << "Select a measurement system:" << std::endl;
         std::cout << "1. SI (kilogram, kilometer, km/h)" << std::endl;
         std::cout << "2. Imperial (pound, feet, mph)" << std::endl;
@@ -114,7 +210,7 @@ void selectMeasurementSystem() {
             valid = true;
         } else {
             printLogo();
-            printErrorMessage(message);
+            printErrorMessage(errorMessage);
         }
     }
 
@@ -124,9 +220,9 @@ void selectMeasurementSystem() {
 std::string selectSatelliteDataInputMode() {
     std::string input;
     bool valid = false;
-    std::string message = "\nInvalid choice! Try again.\n\n";
+    std::string errorMessage = "\nInvalid choice! Try again.\n\n";
 
-    while (valid == false) {
+    while (!valid) {
         std::cout << "Select satellite data input mode:" << std::endl;
         std::cout << "1. Manual input" << std::endl;
         std::cout << "2. Load from file" << std::endl;
@@ -134,16 +230,14 @@ std::string selectSatelliteDataInputMode() {
 
         std::getline(std::cin, input);
 
-        if (input == "1") 
-        {
+        if (input == "1") {
             return "manual";
-        }
-        else if (input == "2")
-        {
+        } else if (input == "2") {
             return "file";
+        } else {
+            printLogo();
+            printErrorMessage(errorMessage);
         }
-        printLogo();
-        printErrorMessage(message);
     }
 
     printLogo();
@@ -153,7 +247,9 @@ std::string selectSatelliteDataInputMode() {
 
 oct::Satellite getSatelliteData(const std::string& input) {
     std::string message;
-    std::string massUnit, velocityUnit, altitudeUnit;
+    std::string massUnit;
+    std::string velocityUnit;
+    std::string altitudeUnit;
 
     if (measurementSystem == 1) {
         massUnit = "kg";
@@ -163,15 +259,20 @@ oct::Satellite getSatelliteData(const std::string& input) {
         massUnit = "lb";
         velocityUnit = "mph";
         altitudeUnit = "ft";
-    } else if (measurementSystem == 3) {
+    } else {
         massUnit = "lb";
         velocityUnit = "kn";
         altitudeUnit = "ft";
     }
 
     if (input == "manual") {
-        std::string name, massString, velocityString, altitudeString;
-        double mass, velocity, altitude;
+        std::string name;
+        std::string massString;
+        std::string velocityString;
+        std::string altitudeString;
+        double mass = 0.0;
+        double velocity = 0.0;
+        double altitude = 0.0;
         bool valid = false;
 
         printLogo();
@@ -179,12 +280,15 @@ oct::Satellite getSatelliteData(const std::string& input) {
         std::getline(std::cin, name);
 
         printLogo();
-        while (valid == false) {
+
+        while (!valid) {
             std::cout << "Enter satellite mass (" << massUnit << "): ";
             std::getline(std::cin, massString);
+
             try {
-                size_t pos;
+                size_t pos = 0;
                 mass = std::stod(massString, &pos);
+
                 if (pos == massString.size()) {
                     valid = true;
                 } else {
@@ -196,13 +300,17 @@ oct::Satellite getSatelliteData(const std::string& input) {
         }
 
         printLogo();
+
         valid = false;
-        while (valid == false) {
+
+        while (!valid) {
             std::cout << "Enter satellite velocity (" << velocityUnit << "): ";
             std::getline(std::cin, velocityString);
+
             try {
-                size_t pos;
+                size_t pos = 0;
                 velocity = std::stod(velocityString, &pos);
+
                 if (pos == velocityString.size()) {
                     valid = true;
                 } else {
@@ -214,20 +322,24 @@ oct::Satellite getSatelliteData(const std::string& input) {
         }
 
         printLogo();
+
         valid = false;
-        while (valid == false) {
+
+        while (!valid) {
             std::cout << "Enter satellite altitude (" << altitudeUnit << "): ";
             std::getline(std::cin, altitudeString);
+
             try {
-                size_t pos;
+                size_t pos = 0;
                 altitude = std::stod(altitudeString, &pos);
+
                 if (pos == altitudeString.size()) {
                     valid = true;
                 } else {
                     throw std::invalid_argument("Wrong input.");
                 }
             } catch (...) {
-            printErrorMessage("\nInvalid input! Only numbers are allowed. Use a dot '.' as decimal separator if needed. Example: 550.000\n");
+                printErrorMessage("\nInvalid input! Only numbers are allowed. Use a dot '.' as decimal separator if needed. Example: 550.000\n");
             }
         }
 
@@ -239,34 +351,34 @@ oct::Satellite getSatelliteData(const std::string& input) {
             mass = oct::UnitConverter::convertPoundsToKilograms(mass);
             velocity = oct::UnitConverter::convertMilesPerHourToKilometersPerHour(velocity);
             altitude = oct::UnitConverter::convertFeetToMeters(altitude);
-        } else if (measurementSystem == 3) {
+        } else {
             mass = oct::UnitConverter::convertPoundsToKilograms(mass);
             velocity = oct::UnitConverter::convertKnotsToKilometersPerHour(velocity);
             altitude = oct::UnitConverter::convertFeetToMeters(altitude);
         }
 
         return oct::Satellite(name, mass, velocity, altitude);
-    }
-    else if (input == "file") {
+    } else if (input == "file") {
         std::string path;
         oct::Satellite satellite;
         bool loaded = false;
 
         printLogo();
-        std::cout << "Expected file format (JSON) - see example below:\n"
-            << "{\n"
-            << "  \"name\": \"Telestar\",           <~ satellite name as text\n"
-            << "  \"mass\": 1250.000,             <~ mass in " << massUnit << "\n"
-            << "  \"velocity\": 27600.000,        <~ velocity in " << velocityUnit << "\n"
-            << "  \"altitude\": 550.000           <~ altitude in " << altitudeUnit << "\n"
-            << "}\n\n"
-            << "Please enter the full file path:\n"
-            << "  C:\\Users\\Username\\Desktop\\Data\\satellite.json\n\n"
-            << "Or place the file in the same directory as the program and enter:\n"
-            << "  satellite.json\n\n\n";
 
+        std::cout << "Expected file format (JSON) - see example below:\n";
+        std::cout << "{\n";
+        std::cout << "  \"name\": \"ISS\",\n";
+        std::cout << "  \"mass\": 419725,\n";
+        std::cout << "  \"velocity\": 27600,\n";
+        std::cout << "  \"altitude\": 408\n";
+        std::cout << "}\n\n";
 
-        while (loaded == false) {
+        std::cout << "Please enter the full file path:\n";
+        std::cout << "  C:\\Users\\Username\\Desktop\\Data\\iss.json\n\n";
+        std::cout << "Or place the file in the same directory as the program and enter:\n";
+        std::cout << "  iss.json\n\n\n";
+
+        while (!loaded) {
             std::cout << "Enter the path for the satellite JSON file: ";
             std::getline(std::cin, path);
 
@@ -274,43 +386,52 @@ oct::Satellite getSatelliteData(const std::string& input) {
                 satellite = oct::FileManager::loadSatelliteFromFile(path);
                 loaded = true;
             } catch (const std::exception& e) {
-                message = e.what();
+                std::string message = e.what();
                 printErrorMessage(message);
             }
         }
 
         return satellite;
     }
+
+    return oct::Satellite();
 }
 
 void printErrorMessage(const std::string& message) {
     std::cout << "\033[1;31m" << message << "\033[0m";
 }
 
-oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration){
+oct::SatelliteData printOrbitLoader(const oct::Satellite& satellite, int duration) {
     std::string frames = "|/-\\";
     int idx = 0;
     oct::SatelliteData data = satellite.calculateAll();
     auto begin = std::chrono::steady_clock::now();
-    
+
     std::thread calculationThread([&]() {
         data = satellite.calculateAll();
     });
 
     while ((std::chrono::steady_clock::now() - begin) < std::chrono::seconds(duration)) {
-        std::cout << "\rCalculating " << frames[idx++] << std::flush;
-        idx %= 4;
+        std::cout << "\rCalculating " << frames[idx] << std::flush;
+        idx++;
+
+        if (idx >= 4) {
+            idx = 0;
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
-    calculationThread.join(); 
+    calculationThread.join();
     printLogo();
 
     return data;
 }
 
 void summarizeSatelliteData(oct::Satellite satellite, oct::SatelliteData data) {
-    std::string massUnit, velocityUnit, altitudeUnit;
+    std::string massUnit;
+    std::string velocityUnit;
+    std::string altitudeUnit;
     std::string energyUnit = "J";
     std::string timeUnit = "s";
 
@@ -329,7 +450,7 @@ void summarizeSatelliteData(oct::Satellite satellite, oct::SatelliteData data) {
         satellite.orbitalRadius = oct::UnitConverter::convertMetersToFeet(satellite.orbitalRadius);
         data.orbitalVelocity = oct::UnitConverter::convertKilometersPerHourToMilesPerHour(data.orbitalVelocity);
         data.escapeVelocity = oct::UnitConverter::convertKilometersPerHourToMilesPerHour(data.escapeVelocity);
-    } else if (measurementSystem == 3) {
+    } else {
         massUnit = "lb";
         velocityUnit = "kn";
         altitudeUnit = "ft";
